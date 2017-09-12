@@ -6,11 +6,19 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.mysql.jdbc.Connection;
+
+import JDBC.db.Utils;
+import JDBC.mainMethod.Method;
+import JDBC.model.StatModel;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.sql.SQLException;
+import java.util.Date;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,30 +28,49 @@ import java.net.URLConnection;
  * To change this template use File | Settings | File Templates.
  */
 public class JSoupTest {
-    public static void main(String args[]) throws IOException {
+    public static void main(String args[]) throws IOException,  ClassNotFoundException, SQLException {
         String baseUrl = "http://www.bzjw.com/standard/";
         String ajaxUrl = "http://www.bzjw.com/include/getinfo.asp?info_x=stdsort&class_x=GB%B9%FA%B1%EA&order_x=" ;
 
         Document baseDoc = getDoc("http://www.bzjw.com/standard/showstd.asp?id_x=1");
         System.out.println(baseDoc.select(".sort_title_ul li").text());
-
+//       
+       
         for(int i=1;i<13;i++){
             String aUrl =ajaxUrl+i;
             System.out.println(aUrl);
             Document ajaxDoc = getDoc(aUrl);
             System.out.println(ajaxDoc.select("a").text());
+           
             for(Element e : ajaxDoc.select("a")){
                 System.out.println(baseUrl+e.attr("href"));
                 Document picDoc = getDoc(baseUrl+e.attr("href"));
-                System.out.println("文字信息：\n" + picDoc.select(".std_detail_c").text());
-                String imageName = picDoc.select(".std_detail_c strong").get(1).text();
-                System.out.println(imageName);
-                System.out.println("图片地址：" + picDoc.select(".std_img_c a").attr("href"));
-                String stdImg = picDoc.select(".std_img_c a").attr("href");
-                getImg(stdImg, imageName);
-            }
+                Elements eles = picDoc.select(".detail_l .detail .top .l");
+                String sqName = eles.get(0).child(0).text();
+                String oldName = eles.get(0).child(1).text();
+                String usName = eles.get(0).child(2).text();
+                
+                Elements piceles = picDoc.select(".detail_l .detail .box");
+                String srcImage = piceles.get(0).child(0).attr("src");
+                System.out.println("");
+                String imageName = new Date().getTime() + ""; 
+                getImg(srcImage, imageName);
+                
+                StatModel model = new StatModel();
+                model.setSqName(sqName);
+                model.setOldName(oldName);
+                model.setUsName(usName);
+                model.setImageName(imageName);
+                model.setSrcImage(srcImage);
+               
+                Method.insert(model);
+                
+                
+                
+                
+            } 
         }
-
+//        for
     }
 
     private static void getImg(String img, String name){
